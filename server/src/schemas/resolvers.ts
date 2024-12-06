@@ -1,13 +1,17 @@
 import { IResolvers } from '@graphql-tools/utils';
-import User from '../models/User'; // Adjust path as needed
+import User, { UserDocument } from '../models/User'; // Adjusted import path
 import { AuthenticationError } from 'apollo-server-express';
-import { signToken } from '../services/auth'; // Adjust path if necessary
+import { signToken } from '../services/auth'; // Adjusted import path
+
+interface Context {
+  user?: UserDocument;
+}
 
 const resolvers: IResolvers = {
   Query: {
-    me: async (_parent, _args, context) => {
+    me: async (_parent: unknown, _args: unknown, context: Context) => {
       if (context.user) {
-        const userData = await User.findById(context.user._id).populate('savedBooks');
+        const userData = await User.findById(context.user.id).populate('savedBooks');
         return userData;
       }
       throw new AuthenticationError('Not logged in');
@@ -15,7 +19,7 @@ const resolvers: IResolvers = {
   },
 
   Mutation: {
-    login: async (_parent, { email, password }) => {
+    login: async (_parent: unknown, { email, password }: { email: string; password: string }) => {
       const user = await User.findOne({ email });
 
       if (!user) {
@@ -28,21 +32,21 @@ const resolvers: IResolvers = {
         throw new AuthenticationError('Invalid credentials');
       }
 
-      // Fix: Pass correct arguments to signToken
-      const token = signToken(user.username, user.email, user._id);
+      const token = signToken(user.username, user.email, user.id);
       return { token, user };
     },
-    addUser: async (_parent, { username, email, password }) => {
+    addUser: async (
+      _parent: unknown,
+      { username, email, password }: { username: string; email: string; password: string }
+    ) => {
       const user = await User.create({ username, email, password });
-
-      // Fix: Pass correct arguments to signToken
-      const token = signToken(user.username, user.email, user._id);
+      const token = signToken(user.username, user.email, user.id);
       return { token, user };
     },
-    saveBook: async (_parent, { input }, context) => {
+    saveBook: async (_parent: unknown, { input }: { input: any }, context: Context) => {
       if (context.user) {
         const updatedUser = await User.findByIdAndUpdate(
-          context.user._id,
+          context.user.id,
           { $addToSet: { savedBooks: input } },
           { new: true }
         ).populate('savedBooks');
@@ -51,10 +55,10 @@ const resolvers: IResolvers = {
       }
       throw new AuthenticationError('Not logged in');
     },
-    removeBook: async (_parent, { bookId }, context) => {
+    removeBook: async (_parent: unknown, { bookId }: { bookId: string }, context: Context) => {
       if (context.user) {
         const updatedUser = await User.findByIdAndUpdate(
-          context.user._id,
+          context.user.id,
           { $pull: { savedBooks: { bookId } } },
           { new: true }
         ).populate('savedBooks');
@@ -67,4 +71,5 @@ const resolvers: IResolvers = {
 };
 
 export default resolvers;
+
 

@@ -41,6 +41,4 @@ const typeDefs = `#graphql
     link: String
   }
 `;
-
 export default typeDefs;
-
