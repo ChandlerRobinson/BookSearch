@@ -6,8 +6,8 @@ import { ApolloServer } from '@apollo/server';
 import { expressMiddleware } from '@apollo/server/express4';
 import { json } from 'body-parser';
 import cors from 'cors';
-import typeDefs from './schemas/typeDefs';
-import resolvers from './schemas/resolvers';
+import typeDefs from './schemas/typeDefs.js';
+import resolvers from './schemas/resolvers.js';
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -16,10 +16,14 @@ const PORT = process.env.PORT || 3001;
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 
-// Initialize Apollo Server
+// Create Apollo Server with proper context
 const server = new ApolloServer({
   typeDefs,
   resolvers,
+  context: async ({ req }) => {
+    // Add any custom context here if needed
+    return { req };
+  },
 });
 
 // Apply Apollo middleware
@@ -27,20 +31,23 @@ async function startApolloServer() {
   await server.start();
   app.use('/graphql', cors(), json(), expressMiddleware(server));
 
-  // Static files for production
+  // Serve static files in production
   if (process.env.NODE_ENV === 'production') {
     app.use(express.static(path.join(__dirname, '../client/build')));
   }
 
-  // Existing RESTful routes
+  // RESTful routes
   app.use(routes);
 
-  // Start the server once DB is connected
+  // Connect to DB and start the server
   db.once('open', () => {
     app.listen(PORT, () =>
-      console.log(`🌍 Now listening on localhost:${PORT}\n🚀 GraphQL server ready at http://localhost:${PORT}/graphql`)
+      console.log(
+        `🌍 Now listening on localhost:${PORT}\n🚀 GraphQL server ready at http://localhost:${PORT}/graphql`
+      )
     );
   });
 }
 
 startApolloServer();
+

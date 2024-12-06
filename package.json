@@ -14,10 +14,12 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
+    "@types/cors": "^2.8.17",
     "concurrently": "^8.2.0"
   },
   "dependencies": {
     "@apollo/server": "^4.11.2",
+    "@graphql-tools/utils": "^10.6.2",
     "graphql": "^16.9.0"
   }
 }
