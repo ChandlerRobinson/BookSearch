@@ -4,7 +4,7 @@ import db from './config/connection.js';
 import routes from './routes/index.js';
 import { ApolloServer } from '@apollo/server';
 import { expressMiddleware } from '@apollo/server/express4';
-import { json } from 'body-parser';
+import bodyParser from 'body-parser'; // Corrected import
 import cors from 'cors';
 import typeDefs from './schemas/typeDefs.js';
 import resolvers from './schemas/resolvers.js';
@@ -18,8 +18,8 @@ const app = express();
 const PORT = process.env.PORT || 3001;
 
 // Middleware for parsing
-app.use(express.urlencoded({ extended: true }));
-app.use(express.json());
+app.use(bodyParser.json()); // Corrected usage
+app.use(bodyParser.urlencoded({ extended: true }));
 
 // Create Apollo Server
 const server = new ApolloServer<ApolloContext>({
@@ -33,7 +33,6 @@ async function startApolloServer() {
   app.use(
     '/graphql',
     cors(),
-    json(),
     expressMiddleware(server, {
       context: async ({ req }: { req: express.Request }): Promise<ApolloContext> => {
         return { req }; // Return the request object in the context
