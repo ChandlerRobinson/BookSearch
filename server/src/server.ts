@@ -16,20 +16,26 @@ const PORT = process.env.PORT || 3001;
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 
-// Create Apollo Server with proper context
+// Create Apollo Server
 const server = new ApolloServer({
   typeDefs,
   resolvers,
-  context: async ({ req }) => {
-    // Add any custom context here if needed
-    return { req };
-  },
 });
 
-// Apply Apollo middleware
+// Apply Apollo middleware with context
 async function startApolloServer() {
   await server.start();
-  app.use('/graphql', cors(), json(), expressMiddleware(server));
+
+  app.use(
+    '/graphql',
+    cors(),
+    json(),
+    expressMiddleware(server, {
+      context: async ({ req }) => {
+        return { req };
+      },
+    })
+  );
 
   // Serve static files in production
   if (process.env.NODE_ENV === 'production') {
@@ -50,4 +56,5 @@ async function startApolloServer() {
 }
 
 startApolloServer();
+
 
