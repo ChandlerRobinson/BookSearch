@@ -9,6 +9,11 @@ import cors from 'cors';
 import typeDefs from './schemas/typeDefs.js';
 import resolvers from './schemas/resolvers.js';
 
+// Define the context type to match Apollo Server expectations
+type ApolloContext = {
+  req: express.Request;
+};
+
 const app = express();
 const PORT = process.env.PORT || 3001;
 
@@ -17,12 +22,11 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 
 // Create Apollo Server
-const server = new ApolloServer({
+const server = new ApolloServer<ApolloContext>({
   typeDefs,
   resolvers,
 });
 
-// Apply Apollo middleware with context
 async function startApolloServer() {
   await server.start();
 
@@ -31,21 +35,18 @@ async function startApolloServer() {
     cors(),
     json(),
     expressMiddleware(server, {
-      context: async ({ req }) => {
-        return { req };
+      context: async ({ req }: { req: express.Request }): Promise<ApolloContext> => {
+        return { req }; // Return the request object in the context
       },
     })
   );
 
-  // Serve static files in production
   if (process.env.NODE_ENV === 'production') {
     app.use(express.static(path.join(__dirname, '../client/build')));
   }
 
-  // RESTful routes
   app.use(routes);
 
-  // Connect to DB and start the server
   db.once('open', () => {
     app.listen(PORT, () =>
       console.log(
@@ -56,5 +57,10 @@ async function startApolloServer() {
 }
 
 startApolloServer();
+
+
+
+
+
 
 
