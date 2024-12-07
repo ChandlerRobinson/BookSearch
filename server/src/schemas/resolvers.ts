@@ -1,17 +1,20 @@
-import { IResolvers } from '@graphql-tools/utils';
-import User, { UserDocument } from '../models/User'; // Adjusted import path
-import { AuthenticationError } from 'apollo-server-express';
-import { signToken } from '../services/auth'; // Adjusted import path
+import {User} from '../models/index.js'; // Adjusted import path
+import { AuthenticationError } from '../services/auth.js';
+import { signToken } from '../services/auth.js'; // Adjusted import path
 
 interface Context {
-  user?: UserDocument;
+  user?: {
+    _id: string,
+    username: string,
+    email: string
+  };
 }
 
-const resolvers: IResolvers = {
+const resolvers = {
   Query: {
     me: async (_parent: unknown, _args: unknown, context: Context) => {
       if (context.user) {
-        const userData = await User.findById(context.user.id).populate('savedBooks');
+        const userData = await User.findById(context.user._id).populate('savedBooks');
         return userData;
       }
       throw new AuthenticationError('Not logged in');
@@ -32,7 +35,7 @@ const resolvers: IResolvers = {
         throw new AuthenticationError('Invalid credentials');
       }
 
-      const token = signToken(user.username, user.email, user.id);
+      const token = signToken(user.username, user.email, user._id);
       return { token, user };
     },
     addUser: async (
@@ -40,13 +43,13 @@ const resolvers: IResolvers = {
       { username, email, password }: { username: string; email: string; password: string }
     ) => {
       const user = await User.create({ username, email, password });
-      const token = signToken(user.username, user.email, user.id);
+      const token = signToken(user.username, user.email, user._id);
       return { token, user };
     },
     saveBook: async (_parent: unknown, { input }: { input: any }, context: Context) => {
       if (context.user) {
         const updatedUser = await User.findByIdAndUpdate(
-          context.user.id,
+          context.user._id,
           { $addToSet: { savedBooks: input } },
           { new: true }
         ).populate('savedBooks');
@@ -58,7 +61,7 @@ const resolvers: IResolvers = {
     removeBook: async (_parent: unknown, { bookId }: { bookId: string }, context: Context) => {
       if (context.user) {
         const updatedUser = await User.findByIdAndUpdate(
-          context.user.id,
+          context.user._id,
           { $pull: { savedBooks: { bookId } } },
           { new: true }
         ).populate('savedBooks');
@@ -71,5 +74,3 @@ const resolvers: IResolvers = {
 };
 
 export default resolvers;
-
-

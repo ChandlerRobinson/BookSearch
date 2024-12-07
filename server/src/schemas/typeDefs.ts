@@ -1,4 +1,4 @@
-const typeDefs = `#graphql
+const typeDefs = `
   type Query {
     me: User
   }
@@ -41,6 +41,4 @@ const typeDefs = `#graphql
     link: String
   }
 `;
-
 export default typeDefs;
-
