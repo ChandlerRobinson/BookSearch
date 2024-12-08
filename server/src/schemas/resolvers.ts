@@ -13,9 +13,12 @@ interface Context {
 const resolvers = {
   Query: {
     me: async (_parent: unknown, _args: unknown, context: Context) => {
+      console.log(context.user)
       if (context.user) {
         const userData = await User.findById(context.user._id).populate('savedBooks');
+        console.log(userData)
         return userData;
+      
       }
       throw new AuthenticationError('Not logged in');
     },
